@@ -2,7 +2,7 @@ from socket import *
 from threading import *
 import string
 import sys
-#arguments: porta;0-broker/1-cliente;0-pub/1-sub/2-req;assunto(menospara2);noticia(menospara1e2).
+#arguments: porta;0-broker/1-cliente;0-pub/1-sub/2-req;assunto(menos para o tipo 2);noticia apenas tipo 0 necessita.
 
 def envia_nome(name, port):
 	NameServer = 'localhost'
@@ -22,10 +22,10 @@ def aceitar_conexoes():
 		print(message)
 		print(arguments)
 		address = str(serverSocket.getsockname()[0]) + ' ' + arguments[0]
-		if arguments[2] == '0':
-			Thread(target=publish, args=(arguments[3], arguments[4],address,arguments[1],client)).start()
+		if arguments[2] == '0': 
+			Thread(target=publish, args=(arguments[3], arguments[4],address,int(arguments[1]),client)).start()
 		elif arguments[2] == '1':
-			Thread(target=subscribe, args=(arguments[3],address,arguments[1],client)).start()
+			Thread(target=subscribe, args=(arguments[3],address,int(arguments[1]),client)).start()
 		else:
 			Thread(target=request_insterest, args=(address,client)).start()
 		client.close()
@@ -33,7 +33,7 @@ def publish(e1,e2,x,Type,clientSocket):
 	if e1 in subscriptions:
 		matchlist = match(e1, subscriptions)
 		notify(e1,e2, matchlist)
-		print(matchlist)
+		#print(matchlist)
 	else:
 		subscribe(e1,x,Type, clientSocket)
 	if e1 in routing:
@@ -50,14 +50,14 @@ def publish(e1,e2,x,Type,clientSocket):
 		nameSock = str(clientSocket.getsockname()[0]) + ' ' + str(clientSocket.getsockname()[1])
 		subscribe(e1,nameSock,0,clientSocket)
 def subscribe(s,x,Type,clientSocket):
-	if Type == 1:
+	if Type == 1: #tipo 1 eh cliente
 		subscriptions.setdefault(s, []).append(x)
-		print('SUB')
-		print(subscriptions)
-	else:
+		#print('SUB')
+		#print(subscriptions)
+	if Type == 0: #tipo 0 eh broker
 		routing.setdefault(s, []).append(x)
-		print('ROUT')
-		print(routing)
+		#print('ROUT')
+		#print(routing)
 	for p in neighbours:
 		if p != x:
 			ip, port = p.split(' ')
