@@ -1,17 +1,20 @@
-#$1$ cliente
-#$2$ broker
+#c1c cliente
+#c2c broker
 from socket import *
 from threading import *
+import random
+import string
 
 def aceitar_conexoes():
 	while 1:
 		client, addr = serverSocket.accept()
 		print(str(addr) + ' conectado')
-		message = client.recv(1024)
-		if message == '$1$':
+		message = client.recv(2048)
+		arguments = message.split(' ')
+		if arguments[0] == 'c1c':
 			Thread(target=cliente, args=(client,)).start()
 		else:
-			Thread(target=broker, args=(client,addr)).start()
+			Thread(target=broker, args=(client,str(arguments[1]), str(arguments[2]))).start()
 		
 def cliente(client):
 	
@@ -19,10 +22,21 @@ def cliente(client):
 	client.send(bytes(value))
 	client.close()
 	
-def broker(client,addr):
-	name = client.recv(1024)
-	client.close()
+def broker(client,name, port):
+	addr = str(client.getsockname()[0]) + ' ' + port
+	print(addr)
+	print(name)
 	brokers_list[name] = addr
+	
+	tosend = ''
+	if len(brokers_list) > 0:
+		for k,v in brokers_list.items():
+			if k != name:
+				tosend = tosend + v + ';'
+		client.send(bytes(tosend))
+	client.close()
+	print(brokers_list)
+	
 			
 			
 serverPort = 12004
@@ -32,7 +46,7 @@ brokers_list = {}
 
 
 if __name__ == "__main__":
-	serverSocket.listen(2)
+	serverSocket.listen(1000)
 	print ('Servidor online')
 	th = Thread(target=aceitar_conexoes)
 	th.start()
